@@ -1,0 +1,34 @@
+# docker-compose.prod.yml  – Production overrides (Oracle free tier)
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  db:
+    # Constrain Postgres for Oracle free tier (1 GB total RAM)
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    environment:
+      # Low-memory Postgres tuning
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=128MB
+      -c work_mem=2MB
+      -c maintenance_work_mem=32MB
+      -c max_connections=30
+
+  app:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    environment:
+      ENVIRONMENT: prod
+      DEBUG: "false"
+      WORKERS: "1"
+      DB_POOL_SIZE: "3"
+      DB_MAX_OVERFLOW: "0"
+    # No source mounting in prod
+    volumes: []

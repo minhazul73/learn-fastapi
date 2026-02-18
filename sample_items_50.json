@@ -1,0 +1,308 @@
+[
+  {
+    "name": "Wireless Headphones",
+    "description": "Premium noise-cancelling wireless headphones with 30-hour battery life",
+    "price": 199.99,
+    "tax": 20.0
+  },
+  {
+    "name": "USB-C Cable",
+    "description": "High-speed USB-C charging and data transfer cable, 2 meters",
+    "price": 15.99,
+    "tax": 1.6
+  },
+  {
+    "name": "Mechanical Keyboard",
+    "description": "RGB backlit mechanical keyboard with cherry MX switches",
+    "price": 149.99,
+    "tax": 15.0
+  },
+  {
+    "name": "Wireless Mouse",
+    "description": "Silent wireless mouse with precision tracking",
+    "price": 29.99,
+    "tax": 3.0
+  },
+  {
+    "name": "4K Webcam",
+    "description": "Ultra HD 4K webcam with auto-focus for streaming and video calls",
+    "price": 99.99,
+    "tax": 10.0
+  },
+  {
+    "name": "Desk Lamp",
+    "description": "LED desk lamp with adjustable brightness and color temperature",
+    "price": 45.99,
+    "tax": 4.6
+  },
+  {
+    "name": "Phone Stand",
+    "description": "Adjustable aluminum phone stand for desk use",
+    "price": 19.99,
+    "tax": 2.0
+  },
+  {
+    "name": "External SSD 1TB",
+    "description": "Portable 1TB external solid state drive with fast speeds",
+    "price": 129.99,
+    "tax": 13.0
+  },
+  {
+    "name": "Portable Power Bank",
+    "description": "30000mAh portable battery pack with fast charging support",
+    "price": 49.99,
+    "tax": 5.0
+  },
+  {
+    "name": "Screen Protector",
+    "description": "Tempered glass screen protector for smartphones",
+    "price": 9.99,
+    "tax": 1.0
+  },
+  {
+    "name": "Laptop Stand",
+    "description": "Ergonomic aluminum laptop stand for improved posture",
+    "price": 39.99,
+    "tax": 4.0
+  },
+  {
+    "name": "Bluetooth Speaker",
+    "description": "Portable waterproof Bluetooth speaker with 360-degree sound",
+    "price": 79.99,
+    "tax": 8.0
+  },
+  {
+    "name": "HDMI Cable 4K",
+    "description": "High-speed HDMI 2.1 cable supporting 4K@120Hz",
+    "price": 24.99,
+    "tax": 2.5
+  },
+  {
+    "name": "Cable Organizer",
+    "description": "Silicone cable organizer clips for desk cable management",
+    "price": 12.99,
+    "tax": 1.3
+  },
+  {
+    "name": "Monitor Arm",
+    "description": "Adjustable monitor arm mount for single display",
+    "price": 89.99,
+    "tax": 9.0
+  },
+  {
+    "name": "Keyboard Wrist Rest",
+    "description": "Memory foam wrist rest for keyboard ergonomics",
+    "price": 19.99,
+    "tax": 2.0
+  },
+  {
+    "name": "Mouse Pad Large",
+    "description": "Extra large mouse pad with non-slip base",
+    "price": 25.99,
+    "tax": 2.6
+  },
+  {
+    "name": "USB Hub 7-Port",
+    "description": "7-port USB 3.0 hub with power adapter",
+    "price": 39.99,
+    "tax": 4.0
+  },
+  {
+    "name": "DP to HDMI Adapter",
+    "description": "DisplayPort to HDMI 2.0 converter for 4K displays",
+    "price": 34.99,
+    "tax": 3.5
+  },
+  {
+    "name": "Cooling Pad",
+    "description": "Laptop cooling pad with 5 fans for temperature management",
+    "price": 49.99,
+    "tax": 5.0
+  },
+  {
+    "name": "Webcam Ring Light",
+    "description": "LED ring light for webcam with dimmable settings",
+    "price": 35.99,
+    "tax": 3.6
+  },
+  {
+    "name": "Microphone Pop Filter",
+    "description": "Microphone pop filter to reduce plosive sounds",
+    "price": 14.99,
+    "tax": 1.5
+  },
+  {
+    "name": "Monitor Light Bar",
+    "description": "Smart monitor light bar reducing eye strain",
+    "price": 89.99,
+    "tax": 9.0
+  },
+  {
+    "name": "Desk Organizer",
+    "description": "Multi-compartment desk organizer for office supplies",
+    "price": 29.99,
+    "tax": 3.0
+  },
+  {
+    "name": "Document Holder",
+    "description": "Adjustable document holder for typing references",
+    "price": 19.99,
+    "tax": 2.0
+  },
+  {
+    "name": "Keyboard Tray",
+    "description": "Under-desk keyboard tray for ergonomic typing",
+    "price": 59.99,
+    "tax": 6.0
+  },
+  {
+    "name": "Monitor Stand Riser",
+    "description": "Monitor stand riser with storage compartment",
+    "price": 49.99,
+    "tax": 5.0
+  },
+  {
+    "name": "Cable Sleeve",
+    "description": "Neoprene cable sleeve for cable protection and organization",
+    "price": 11.99,
+    "tax": 1.2
+  },
+  {
+    "name": "USB Extension Cable",
+    "description": "5-meter USB 3.0 extension cable with signal boost",
+    "price": 21.99,
+    "tax": 2.2
+  },
+  {
+    "name": "Desk Clamp Light",
+    "description": "Adjustable LED clamp light for monitors and desks",
+    "price": 54.99,
+    "tax": 5.5
+  },
+  {
+    "name": "Wireless Charging Pad",
+    "description": "15W fast wireless charging pad for smartphones",
+    "price": 34.99,
+    "tax": 3.5
+  },
+  {
+    "name": "Phone Car Mount",
+    "description": "Gravity car mount for dashboard and windshield",
+    "price": 24.99,
+    "tax": 2.5
+  },
+  {
+    "name": "Desk Shelf",
+    "description": "Under-desk shelf for monitor or storage",
+    "price": 74.99,
+    "tax": 7.5
+  },
+  {
+    "name": "Ergonomic Mouse Pad",
+    "description": "Mouse pad with built-in wrist rest",
+    "price": 32.99,
+    "tax": 3.3
+  },
+  {
+    "name": "Monitor Privacy Screen",
+    "description": "Anti-glare privacy screen for monitor protection",
+    "price": 59.99,
+    "tax": 6.0
+  },
+  {
+    "name": "Desk Chair Mat",
+    "description": "Hard floor chair mat to protect floors",
+    "price": 44.99,
+    "tax": 4.5
+  },
+  {
+    "name": "Thunderbolt 3 Cable",
+    "description": "Thunderbolt 3 compatible cable for fast data transfer",
+    "price": 44.99,
+    "tax": 4.5
+  },
+  {
+    "name": "HDMI Splitter",
+    "description": "HDMI 1x2 splitter for dual monitor setup",
+    "price": 29.99,
+    "tax": 3.0
+  },
+  {
+    "name": "USB-C Hub Multiport",
+    "description": "7-in-1 USB-C hub with power delivery and HDMI",
+    "price": 69.99,
+    "tax": 7.0
+  },
+  {
+    "name": "Desk Pad",
+    "description": "Large mouse and keyboard desk pad, waterproof",
+    "price": 35.99,
+    "tax": 3.6
+  },
+  {
+    "name": "Video Light Kit",
+    "description": "Professional video lighting kit for streaming and recording",
+    "price": 129.99,
+    "tax": 13.0
+  },
+  {
+    "name": "Green Screen",
+    "description": "Collapsible green screen backdrop for video production",
+    "price": 79.99,
+    "tax": 8.0
+  },
+  {
+    "name": "Stream Deck Mini",
+    "description": "Programmable macro keypad for content creators",
+    "price": 99.99,
+    "tax": 10.0
+  },
+  {
+    "name": "Mic Shock Mount",
+    "description": "Universal microphone shock mount for noise isolation",
+    "price": 39.99,
+    "tax": 4.0
+  },
+  {
+    "name": "XLR Cable",
+    "description": "Professional 20-foot XLR microphone cable",
+    "price": 19.99,
+    "tax": 2.0
+  },
+  {
+    "name": "Audio Interface",
+    "description": "2-channel USB audio interface for recording",
+    "price": 149.99,
+    "tax": 15.0
+  },
+  {
+    "name": "Studio Headphones",
+    "description": "Closed-back studio monitor headphones with flat response",
+    "price": 179.99,
+    "tax": 18.0
+  },
+  {
+    "name": "Boom Arm",
+    "description": "Mic boom arm with spring-tension for hands-free usage",
+    "price": 59.99,
+    "tax": 6.0
+  },
+  {
+    "name": "Ring Light Stand",
+    "description": "Adjustable tripod stand for ring lights",
+    "price": 34.99,
+    "tax": 3.5
+  },
+  {
+    "name": "Monitor Brightness Controller",
+    "description": "USB brightness controller for multiple monitors",
+    "price": 89.99,
+    "tax": 9.0
+  },
+  {
+    "name": "Cable Label Maker",
+    "description": "Handheld cable label maker for cable organization",
+    "price": 49.99,
+    "tax": 5.0
+  }
+]

@@ -1,0 +1,33 @@
+# ── Python ─────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.myenv/
+.venv/
+venv/
+env/
+
+# ── Environment ───────────────────────────
+.env
+.env.dev
+.env.stage
+.env.prod
+
+# ── IDE ────────────────────────────────────
+.vscode/
+.idea/
+
+# ── Database ──────────────────────────────
+*.db
+*.sqlite3
+
+# ── Testing ───────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── Build ─────────────────────────────────
+dist/
+build/
+*.egg-info/
+.ruff_cache/

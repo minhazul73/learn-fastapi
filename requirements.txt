@@ -1,0 +1,28 @@
+# ── Core ──────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+gunicorn>=22.0.0
+pydantic>=2.9.0
+pydantic-settings>=2.5.0
+
+# ── Database ──────────────────────────────────────────────
+sqlalchemy>=2.0.35
+asyncpg>=0.30.0
+alembic>=1.14.0
+
+# ── Auth ──────────────────────────────────────────────────
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt==4.0.1                 # pin for passlib compatibility
+python-multipart>=0.0.12      # required for form data
+pydantic[email]>=2.9.0        # EmailStr support
+
+# ── HTTP Client (n8n webhooks, external APIs) ─────────────
+httpx>=0.27.0
+
+# ── Dev / Testing (install with: pip install -r requirements-dev.txt) ─
+# pytest>=8.0
+# pytest-asyncio>=0.24
+# httpx  (also used as test client)
+# ruff>=0.7.0
+# pre-commit>=4.0

@@ -1,0 +1,35 @@
+# docker-compose.dev.yml  – Development overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Mount source for live reload during development
+    volumes:
+      - .:/app
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir app
+    environment:
+      ENVIRONMENT: dev
+      DEBUG: "true"
+
+  # Optional: pgAdmin for visual DB management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5050:5050"
+    depends_on:
+      - db
+    profiles:
+      - debug  # only start with: docker compose --profile debug up
