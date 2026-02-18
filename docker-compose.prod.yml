@@ -30,5 +30,34 @@ services:
       WORKERS: "1"
       DB_POOL_SIZE: "3"
       DB_MAX_OVERFLOW: "0"
+      GUNICORN_CMD_ARGS: "--proxy-headers --forwarded-allow-ips=*"
+    # Do not expose the app directly in prod; Nginx will proxy to it.
+    ports: []
     # No source mounting in prod
     volumes: []
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    entrypoint: >
+      /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
+
+volumes:
+  certbot_www:
+  certbot_certs:
