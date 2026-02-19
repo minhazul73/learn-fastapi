@@ -45,8 +45,8 @@ This guide covers deploying the FastAPI app with PostgreSQL on Render's free tie
    - **Region**: Same as database (Step 1)
    - **Branch**: `main` (or your default branch)
    - **Runtime**: `Python 3`
-   - **Build Command**: Leave empty (Render reads from `render.yaml`)
-   - **Start Command**: Leave empty (Render reads from `render.yaml`)
+   - **Build Command**: `pip install -r requirements.txt && alembic upgrade head`
+   - **Start Command**: `gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:8000`
    - **Plan**: Free or Starter ($7/month for 24/7 uptime)
 4. Click **Create Web Service**
 
