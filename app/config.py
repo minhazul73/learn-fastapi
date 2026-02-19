@@ -26,13 +26,13 @@ class Settings(BaseSettings):
     # ── Server ────────────────────────────────────────────
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    # Keep workers LOW for Oracle free tier (1 OCPU / 1 GB RAM)
-    WORKERS: int = 1
+    # Use 2-4 workers (Render has more capacity than Oracle free tier)
+    WORKERS: int = 2
 
     # ── Database (PostgreSQL + asyncpg) ───────────────────
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/myapp"
-    DB_POOL_SIZE: int = 5
-    DB_MAX_OVERFLOW: int = 0  # 0 = no overflow; keeps memory bounded
+    DB_POOL_SIZE: int = 10  # Render has more capacity
+    DB_MAX_OVERFLOW: int = 3  # Allow some overflow
     DB_POOL_TIMEOUT: int = 30
     DB_POOL_RECYCLE: int = 300  # recycle stale connections every 5 min
 

@@ -89,7 +89,25 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile debug up
 ```
 
-### 3. Production (Oracle Free Tier)
+### 3. Production: Render (Recommended - No Credit Card Required)
+
+**Deploy with automatic GitHub integration, managed PostgreSQL, and free HTTPS.**
+
+See [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md) for step-by-step instructions.
+
+Quick summary:
+- Create PostgreSQL service (free tier available)
+- Connect GitHub repo to Web Service
+- Set environment variables in Render dashboard
+- Done! Auto-deploys on every `git push`
+
+**Why Render over Oracle?**
+- No credit card required
+- Simpler setup (no container management)
+- Managed database with automatic backups
+- Auto-scaling & HTTPS included
+
+### 4. Production: Oracle Free Tier
 
 ```bash
 # On the server
@@ -98,6 +116,44 @@ cp .env.example .env
 
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
+
+This repo includes an Nginx reverse proxy and a Certbot renewer in
+`docker-compose.prod.yml` plus a sample config in `nginx/conf.d/app.conf`.
+
+**Prereqs**
+
+- Point your domain A record to the VM public IP
+- Open inbound ports 80 and 443 in Oracle security list
+
+**One-time cert issuance**
+
+1) Temporarily comment out the HTTPS server block in `nginx/conf.d/app.conf`
+     so Nginx can start without existing certs.
+2) Start app + db + Nginx (HTTP only):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d nginx app db
+```
+
+3) Issue the cert (replace domain/email if needed):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm certbot certonly \
+    --webroot -w /var/www/certbot \
+    -d api.learn-fastapi.com \
+    -m minhazul73@gmail.com \
+    --agree-tos --no-eff-email
+```
+
+4) Restore the HTTPS server block and restart Nginx:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
+```
+
+**Renewals**
+
+The `certbot` service runs `certbot renew` every 12 hours.
 
 ## Environment Files
 
@@ -152,4 +208,4 @@ await trigger_webhook("on-new-order", {"order_id": 123, "total": 49.99})
 - Use `docker-compose.prod.yml` which sets memory limits (256 MB each for app + DB)
 - Postgres tuned with `shared_buffers=64MB`, `max_connections=30`
 - Enable swap on the VM: `sudo fallocate -l 1G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
-- Use Caddy or nginx as reverse proxy with free Let's Encrypt TLS
+- Use Nginx reverse proxy with free Let's Encrypt TLS (see HTTPS section above)

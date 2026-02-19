@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: myapp
+    runtime: python
+    pythonVersion: 3.11
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:8000
+    envVars:
+      - key: DEBUG
+        value: false
+      - key: ENVIRONMENT
+        value: prod
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+
+  - type: pserv
+    name: myapp-db
+    databaseName: myapp
+    databaseUser: postgres
+    plan: free
