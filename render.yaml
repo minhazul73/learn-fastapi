@@ -16,5 +16,5 @@ services:
   - type: pserv
     name: myapp-db
     databaseName: myapp
-    databaseUser: postgres
+    databaseUser: myappuser
     plan: free

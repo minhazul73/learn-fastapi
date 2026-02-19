@@ -27,7 +27,7 @@ This guide covers deploying the FastAPI app with PostgreSQL on Render's free tie
 3. Fill in:
    - **Name**: `myapp-db`
    - **Database**: `myapp`
-   - **User**: `postgres`
+   - **User**: `myappuser` (Render doesn't allow `postgres`)
    - **Region**: Choose closest to your users
    - **Plan**: Free
 4. Click **Create Database**
