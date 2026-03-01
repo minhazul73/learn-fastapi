@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import get_settings
 from app.models.base import Base
+from app.utils.db import get_asyncpg_connect_args
 
 # Import every model module so Alembic sees all tables
 from app.models import item, user  # noqa: F401
@@ -22,7 +23,8 @@ config = context.config
 settings = get_settings()
 
 # Override the URL from alembic.ini with the one from .env / settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+db_url = settings.ALEMBIC_DATABASE_URL or settings.DATABASE_URL
+config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -51,10 +53,12 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode using an async engine."""
+    url = config.get_main_option("sqlalchemy.url")
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=get_asyncpg_connect_args(url),
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

@@ -115,6 +115,25 @@ Verify in **Environment** that `DATABASE_URL` is:
 - Updated to use `postgresql+asyncpg://` (not just `postgresql://`)
 - Copied exactly without typos
 
+### Using Supabase Instead of Render Postgres
+
+If your backend is hosted on Render but your Postgres is on Supabase:
+
+1) In Supabase, copy your connection strings:
+   - **Pooler** host (often `...pooler.supabase.com:6543`) for the running app
+   - **Direct** host (often `db.<project-ref>.supabase.co:5432`) for migrations
+
+2) In Render → Web Service → **Environment**, set:
+
+| Key | Value |
+|-----|-------|
+| `DATABASE_URL` | Your Supabase URL, but with `postgresql+asyncpg://` scheme |
+| `ALEMBIC_DATABASE_URL` | (Optional) Direct Supabase URL with `postgresql+asyncpg://` scheme |
+
+Notes:
+- This repo automatically enables SSL for `*.supabase.com` hosts.
+- If you use the pooler (`:6543`), this repo disables asyncpg statement caching to avoid PgBouncer prepared-statement errors.
+
 ### Secrets Exposed?
 
 If you accidentally commit a real `SECRET_KEY` or `DATABASE_URL`:

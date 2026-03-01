@@ -1,7 +1,4 @@
-"""
-Async SQLAlchemy engine & session factory.
-Tuned for resource-constrained environments (Oracle free tier).
-"""
+"""Async SQLAlchemy engine & session factory."""
 
 from collections.abc import AsyncGenerator
 
@@ -12,15 +9,18 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.config import get_settings
+from app.utils.db import get_asyncpg_connect_args
 
 settings = get_settings()
 
 engine = create_async_engine(
     settings.DATABASE_URL,
+    connect_args=get_asyncpg_connect_args(settings.DATABASE_URL),
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
     pool_timeout=settings.DB_POOL_TIMEOUT,
     pool_recycle=settings.DB_POOL_RECYCLE,
+    pool_pre_ping=True,
     echo=settings.DEBUG,
 )
 

@@ -31,6 +31,9 @@ class Settings(BaseSettings):
 
     # ── Database (PostgreSQL + asyncpg) ───────────────────
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/myapp"
+    # Optional: use a different URL for Alembic (e.g., direct Supabase connection)
+    # while keeping the app on a pooled endpoint.
+    ALEMBIC_DATABASE_URL: str | None = None
     DB_POOL_SIZE: int = 10  # Render has more capacity
     DB_MAX_OVERFLOW: int = 3  # Allow some overflow
     DB_POOL_TIMEOUT: int = 30
