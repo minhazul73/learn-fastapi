@@ -134,6 +134,8 @@ Notes:
 - This repo automatically enables SSL for `*.supabase.com` hosts.
 - If you use the pooler (`:6543`), this repo disables asyncpg statement caching to avoid PgBouncer prepared-statement errors.
 
+If you see `OSError: [Errno 101] Network is unreachable` from Render during `alembic upgrade head`, it usually means Render cannot reach the **direct** database endpoint from that region/network path. The simplest workaround is to set `ALEMBIC_DATABASE_URL` to the **pooler** URL as well and run migrations through PgBouncer.
+
 ### Secrets Exposed?
 
 If you accidentally commit a real `SECRET_KEY` or `DATABASE_URL`:
