@@ -29,8 +29,14 @@ def get_asyncpg_connect_args(database_url: str) -> dict:
 
     connect_args: dict = {}
 
+    is_supabase_host = (
+        host.endswith(".supabase.com")
+        or host.endswith(".supabase.co")
+        or ".supabase." in host
+    )
+
     # Supabase requires TLS for external connections.
-    if "supabase.com" in host:
+    if is_supabase_host:
         connect_args["ssl"] = ssl.create_default_context()
         # Render commonly has no IPv6 route; Supabase DNS may return IPv6 first.
         # Force IPv4 to avoid `[Errno 101] Network is unreachable` during connect.
