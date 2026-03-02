@@ -136,6 +136,8 @@ Notes:
 
 If you see `OSError: [Errno 101] Network is unreachable` from Render during `alembic upgrade head`, it usually means Render cannot reach the **direct** database endpoint from that region/network path. The simplest workaround is to set `ALEMBIC_DATABASE_URL` to the **pooler** URL as well and run migrations through PgBouncer.
 
+If you see `ssl.SSLCertVerificationError: CERTIFICATE_VERIFY_FAILED` when connecting to Supabase (often via the pooler), set Render env var `DB_SSLMODE=require` to use encrypted TLS without certificate verification. Prefer leaving the default (`verify-full`) when it works.
+
 ### Secrets Exposed?
 
 If you accidentally commit a real `SECRET_KEY` or `DATABASE_URL`:

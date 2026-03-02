@@ -10,8 +10,11 @@ Supabase-hosted Postgres.
 
 from __future__ import annotations
 
+import os
 import ssl
 from urllib.parse import urlparse
+
+import certifi
 
 
 def get_asyncpg_connect_args(database_url: str) -> dict:
@@ -35,8 +38,25 @@ def get_asyncpg_connect_args(database_url: str) -> dict:
     )
 
     # Supabase requires TLS for external connections.
+    #
+    # SSL mode can be overridden via env var to match common Postgres SSL modes:
+    # - DB_SSLMODE=verify-full (default): verify cert chain + hostname
+    # - DB_SSLMODE=require: encrypt, but DO NOT verify cert chain (less secure)
+    # - DB_SSLMODE=disable: no TLS
     if is_supabase_host:
-        connect_args["ssl"] = ssl.create_default_context()
+        sslmode = (os.getenv("DB_SSLMODE") or "verify-full").strip().lower()
+
+        if sslmode == "disable":
+            pass
+        elif sslmode == "require":
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            connect_args["ssl"] = ctx
+        else:
+            # Use certifi's CA bundle for consistent verification in containers.
+            ctx = ssl.create_default_context(cafile=certifi.where())
+            connect_args["ssl"] = ctx
 
     # Supabase's pooler endpoint uses PgBouncer; prepared statements can break.
     # Port 6543 is the common Supabase pooler port.
