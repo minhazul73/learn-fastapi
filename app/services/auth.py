@@ -1,6 +1,7 @@
 """Authentication & user management service."""
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
@@ -60,9 +61,17 @@ class AuthService:
                 return None
             by_email.supabase_user_id = supabase_user_id
             self.db.add(by_email)
-            await self.db.flush()
-            await self.db.refresh(by_email)
-            return by_email
+            try:
+                await self.db.flush()
+                await self.db.refresh(by_email)
+                return by_email
+            except IntegrityError:
+                # Another request likely linked/created the row concurrently.
+                await self.db.rollback()
+                existing = await self.get_user_by_supabase_user_id(supabase_user_id)
+                if existing is not None:
+                    return existing
+                return await self.get_user_by_email(email)
 
         user = User(
             email=email,
@@ -72,9 +81,33 @@ class AuthService:
             is_superuser=False,
         )
         self.db.add(user)
-        await self.db.flush()
-        await self.db.refresh(user)
-        return user
+        try:
+            await self.db.flush()
+            await self.db.refresh(user)
+            return user
+        except IntegrityError:
+            # Two parallel requests can both try to create the same email.
+            # Roll back and re-fetch the existing row.
+            await self.db.rollback()
+            existing = await self.get_user_by_supabase_user_id(supabase_user_id)
+            if existing is not None:
+                return existing
+
+            existing_by_email = await self.get_user_by_email(email)
+            if existing_by_email is None:
+                return None
+
+            # If it's an existing user from the old system, link it.
+            if not existing_by_email.supabase_user_id:
+                existing_by_email.supabase_user_id = supabase_user_id
+                self.db.add(existing_by_email)
+                try:
+                    await self.db.flush()
+                    await self.db.refresh(existing_by_email)
+                except IntegrityError:
+                    await self.db.rollback()
+                    return await self.get_user_by_supabase_user_id(supabase_user_id)
+            return existing_by_email
 
     async def register(self, data: RegisterRequest) -> User:
         user = User(
