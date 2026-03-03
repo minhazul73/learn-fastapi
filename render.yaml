@@ -10,6 +10,18 @@ services:
         value: false
       - key: ENVIRONMENT
         value: prod
+      # Supabase Auth (JWT verification)
+      - key: SUPABASE_ISSUER
+        value: https://itlfujemfcftddukpdie.supabase.co/auth/v1
+      - key: SUPABASE_JWKS_URL
+        value: https://itlfujemfcftddukpdie.supabase.co/auth/v1/.well-known/jwks.json
+      - key: SUPABASE_AUDIENCE
+        value: authenticated
+      - key: SUPABASE_ACCEPTED_ALGS
+        value: '["RS256","ES256"]'
+      # Public (client-safe) key; used as `apikey` header if your JWKS endpoint is protected.
+      - key: SUPABASE_ANON_KEY
+        value: sb_publishable_xGAOhb7XLhFyslPnYYkxIA_7IXVcIFY
     autoDeploy: true
     healthCheckPath: /api/v1/health
 
