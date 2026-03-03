@@ -32,10 +32,21 @@ async def get_current_user(
 
     if not supabase_user_id or not isinstance(supabase_user_id, str):
         raise UnauthorizedException("Token missing subject")
-    if not email or not isinstance(email, str):
-        raise UnauthorizedException("Token missing email")
 
     svc = AuthService(db)
+
+    # If the token doesn't include email (can happen depending on provider/claims),
+    # still allow authentication for already-provisioned users.
+    existing = await svc.get_user_by_supabase_user_id(supabase_user_id)
+    if existing is not None:
+        if not existing.is_active:
+            raise UnauthorizedException("User not found or inactive")
+        return existing
+
+    if not email or not isinstance(email, str):
+        # We need an email to create/link a local user record.
+        raise UnauthorizedException("Token missing email")
+
     user = await svc.get_or_create_user_for_supabase(
         supabase_user_id=supabase_user_id,
         email=email,

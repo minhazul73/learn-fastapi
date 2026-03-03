@@ -104,7 +104,7 @@ async def decode_supabase_jwt(token: str) -> dict[str, Any]:
     if not alg or not isinstance(alg, str):
         raise UnauthorizedException("Token header missing alg")
     if settings.SUPABASE_ACCEPTED_ALGS and alg not in settings.SUPABASE_ACCEPTED_ALGS:
-        raise UnauthorizedException("Unsupported token algorithm")
+        raise UnauthorizedException(f"Unsupported token algorithm: {alg}")
 
     jwks = await get_jwks(force_refresh=False)
     jwk_data = _select_jwk(jwks, kid)
@@ -122,7 +122,8 @@ async def decode_supabase_jwt(token: str) -> dict[str, Any]:
             public_key_pem,
             algorithms=[alg],
             audience=settings.SUPABASE_AUDIENCE or None,
-            issuer=settings.SUPABASE_ISSUER or None,
+            # We validate issuer ourselves (tolerant to trailing slashes).
+            issuer=None,
         )
     except httpx.HTTPError:
         raise UnauthorizedException("Unable to fetch signing keys")
@@ -132,8 +133,11 @@ async def decode_supabase_jwt(token: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise UnauthorizedException("Invalid token payload")
 
-    # Defensive issuer validation if env is misconfigured
-    if settings.SUPABASE_ISSUER and payload.get("iss") != settings.SUPABASE_ISSUER:
-        raise UnauthorizedException("Invalid token issuer")
+    # Issuer validation (tolerant to trailing slashes)
+    if settings.SUPABASE_ISSUER:
+        expected_iss = settings.SUPABASE_ISSUER.rstrip("/")
+        actual_iss = str(payload.get("iss") or "").rstrip("/")
+        if not actual_iss or actual_iss != expected_iss:
+            raise UnauthorizedException("Invalid token issuer")
 
     return payload
