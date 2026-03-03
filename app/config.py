@@ -45,6 +45,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # ── Supabase Auth (JWT via JWKS) ──────────────────────
+    # When using Supabase Auth, the Flutter app sends the Supabase-issued
+    # access token (JWT) to this backend. We verify it using the Supabase JWKS.
+    SUPABASE_JWKS_URL: str = ""
+    SUPABASE_ISSUER: str = ""
+    SUPABASE_AUDIENCE: str = "authenticated"
+    SUPABASE_JWKS_CACHE_TTL_SECONDS: int = 3600
+    SUPABASE_ACCEPTED_ALGS: list[str] = ["RS256"]
+
     # ── CORS ──────────────────────────────────────────────
     CORS_ORIGINS: list[str] = ["*"]
 

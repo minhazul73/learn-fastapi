@@ -30,6 +30,52 @@ class AuthService:
         )
         return result.scalar_one_or_none()
 
+    async def get_user_by_supabase_user_id(self, supabase_user_id: str) -> User | None:
+        result = await self.db.execute(
+            select(User).where(User.supabase_user_id == supabase_user_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_or_create_user_for_supabase(
+        self,
+        *,
+        supabase_user_id: str,
+        email: str,
+    ) -> User | None:
+        """Return a local user mapped to Supabase identity.
+
+        Strategy:
+        - Prefer lookup by `supabase_user_id`
+        - Else, if email exists and is not yet linked, link it
+        - Else, create a new local user row
+        """
+
+        user = await self.get_user_by_supabase_user_id(supabase_user_id)
+        if user is not None:
+            return user
+
+        by_email = await self.get_user_by_email(email)
+        if by_email is not None:
+            if by_email.supabase_user_id and by_email.supabase_user_id != supabase_user_id:
+                return None
+            by_email.supabase_user_id = supabase_user_id
+            self.db.add(by_email)
+            await self.db.flush()
+            await self.db.refresh(by_email)
+            return by_email
+
+        user = User(
+            email=email,
+            hashed_password=None,
+            supabase_user_id=supabase_user_id,
+            is_active=True,
+            is_superuser=False,
+        )
+        self.db.add(user)
+        await self.db.flush()
+        await self.db.refresh(user)
+        return user
+
     async def register(self, data: RegisterRequest) -> User:
         user = User(
             email=data.email,
@@ -42,7 +88,9 @@ class AuthService:
 
     async def authenticate(self, email: str, password: str) -> User | None:
         user = await self.get_user_by_email(email)
-        if not user or not verify_password(password, user.hashed_password):
+        if not user or not user.hashed_password:
+            return None
+        if not verify_password(password, user.hashed_password):
             return None
         return user
 
