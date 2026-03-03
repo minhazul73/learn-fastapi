@@ -52,7 +52,9 @@ class Settings(BaseSettings):
     SUPABASE_ISSUER: str = ""
     SUPABASE_AUDIENCE: str = "authenticated"
     SUPABASE_JWKS_CACHE_TTL_SECONDS: int = 3600
-    SUPABASE_ACCEPTED_ALGS: list[str] = ["RS256"]
+    # Supabase may sign JWTs with RS256 (RSA) or ES256 (ECDSA) depending on
+    # project settings; allow both by default.
+    SUPABASE_ACCEPTED_ALGS: list[str] = ["RS256", "ES256"]
 
     # ── CORS ──────────────────────────────────────────────
     CORS_ORIGINS: list[str] = ["*"]
