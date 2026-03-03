@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     # ── Supabase Auth (JWT via JWKS) ──────────────────────
     # When using Supabase Auth, the Flutter app sends the Supabase-issued
     # access token (JWT) to this backend. We verify it using the Supabase JWKS.
+    # Some Supabase projects require an `apikey` header to access the JWKS endpoint.
+    SUPABASE_ANON_KEY: str = ""
     SUPABASE_JWKS_URL: str = ""
     SUPABASE_ISSUER: str = ""
     SUPABASE_AUDIENCE: str = "authenticated"

@@ -30,8 +30,14 @@ async def _fetch_jwks() -> dict[str, Any]:
         raise UnauthorizedException("Supabase JWKS URL is not configured")
 
     try:
+        headers: dict[str, str] = {}
+        if settings.SUPABASE_ANON_KEY:
+            # Supabase/Gotrue may require an apikey to access /auth/v1/keys.
+            headers["apikey"] = settings.SUPABASE_ANON_KEY
+            headers["Authorization"] = f"Bearer {settings.SUPABASE_ANON_KEY}"
+
         async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(settings.SUPABASE_JWKS_URL)
+            resp = await client.get(settings.SUPABASE_JWKS_URL, headers=headers)
             resp.raise_for_status()
             data = resp.json()
     except httpx.HTTPError:
