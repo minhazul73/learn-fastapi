@@ -46,17 +46,16 @@ def get_asyncpg_connect_args(database_url: str) -> dict:
     if is_supabase_host:
         sslmode = (os.getenv("DB_SSLMODE") or "verify-full").strip().lower()
 
-        if sslmode == "disable":
-            pass
-        elif sslmode == "require":
-            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-            connect_args["ssl"] = ctx
-        else:
-            # Use certifi's CA bundle for consistent verification in containers.
-            ctx = ssl.create_default_context(cafile=certifi.where())
-            connect_args["ssl"] = ctx
+        if sslmode != "disable":
+            if sslmode == "require":
+                ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                connect_args["ssl"] = ctx
+            else:
+                # Use certifi's CA bundle for consistent verification in containers.
+                ctx = ssl.create_default_context(cafile=certifi.where())
+                connect_args["ssl"] = ctx
 
     # Supabase's pooler endpoint uses PgBouncer; prepared statements can break.
     # Port 6543 is the common Supabase pooler port.

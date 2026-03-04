@@ -15,10 +15,8 @@ from app.schemas.auth import (
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
-    TokenResponse,
     UserRead,
 )
-from app.services.auth import AuthService
 from app.utils.response import success_response
 
 router = APIRouter()
