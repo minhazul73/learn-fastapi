@@ -13,10 +13,8 @@ This guide covers deploying the FastAPI app with PostgreSQL on Render's free tie
 
 1. **GitHub account** with this repo pushed to it
 2. **Render account** (free signup at https://render.com)
-3. **Generate a strong SECRET_KEY**:
-   ```bash
-   python -c "import secrets; print(secrets.token_hex(32))"
-   ```
+3. **Supabase project** (recommended for auth)
+   - You will configure `SUPABASE_ISSUER` and `SUPABASE_JWKS_URL` so this backend can verify Supabase-issued access tokens.
 
 ## Deployment Steps
 
@@ -56,11 +54,19 @@ Render dashboard → Your Web Service → **Environment**:
 
 | Key | Value | Notes |
 |-----|-------|-------|
-| `DATABASE_URL` | Paste from Step 1 | Update `postgresql://` to `postgresql+asyncpg://` |
+| `DATABASE_URL` | Paste from Step 1 | Update `postgresql://` → `postgresql+asyncpg://` |
 | `ENVIRONMENT` | `prod` | |
 | `DEBUG` | `false` | |
-| `SECRET_KEY` | *(generated in Prerequisites)* | **Keep this secret!** |
 | `CORS_ORIGINS` | `["https://yourdomain.com"]` | Update to your frontend domain |
+| `SUPABASE_ISSUER` | `https://<project-ref>.supabase.co/auth/v1` | Required for issuer validation |
+| `SUPABASE_JWKS_URL` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` | Required to verify JWT signatures |
+| `SUPABASE_AUDIENCE` | `authenticated` | Default matches Supabase |
+| `SUPABASE_ACCEPTED_ALGS` | `["RS256","ES256"]` | Default matches typical Supabase configs |
+| `SUPABASE_ANON_KEY` | *(optional)* | Used as `apikey` header if your JWKS endpoint requires it |
+
+Notes:
+- This backend no longer issues local access/refresh tokens. Token refresh and session handling happen on the client via Supabase.
+- `SECRET_KEY` is not required for Supabase-auth mode (the legacy local auth endpoints are retired). You can keep it set to any value or remove it.
 
 ### Step 4: Deploy
 
@@ -174,7 +180,7 @@ Render's PostgreSQL automatically backs up daily. To restore:
 
 1. Add custom domain (optional)
 2. Configure CORS for your frontend domain
-3. Test all endpoints: `/api/v1/health`, `/api/v1/auth/register`, etc.
+3. Test endpoints: `/api/v1/health`, `/api/v1/auth/me`, `/api/v1/items`, etc.
 4. Monitor logs in Render dashboard
 
 For more info: https://docs.render.com

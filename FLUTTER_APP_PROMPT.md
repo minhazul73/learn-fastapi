@@ -12,10 +12,18 @@ This prompt is designed to be used with the `API_ARCHITECTURE_GUIDE.md` file. Pa
 
 Create a **production-ready Flutter mobile application** that integrates with the FastAPI backend described in the attached `API_ARCHITECTURE_GUIDE.md`. The app must implement user authentication, item management (CRUD operations), and pagination.
 
+Authentication note:
+- User sign-in/sign-up should be implemented via **Supabase Auth** in the Flutter app.
+- For protected backend endpoints, send the Supabase access token as `Authorization: Bearer <token>`.
+- Do **not** call backend `/auth/register`, `/auth/login`, or `/auth/refresh` (they are retired and return 410).
+
 **Target:** iOS & Android (mobile-first)  
 **State Management:** GetX (GetX Controller + Obx + bindings)  
 **Architecture:** Feature-Based Clean Architecture with Modular Design  
 **Code Quality:** SOLID principles, DRY, clean code standards
+
+Required auth dependency:
+- Use `supabase_flutter` for authentication and session refresh.
 
 ---
 
@@ -1025,20 +1033,20 @@ class AuthInterceptor extends Interceptor {
       _isRefreshing = true;
 
       try {
-        final refreshToken = await tokenService.getRefreshToken();
-        if (refreshToken == null) {
+        // Refresh Supabase session (no backend refresh endpoint)
+        final refreshed = await tokenService.refreshSupabaseSession();
+        if (!refreshed) {
           _isRefreshing = false;
           _requestQueue.clear();
           return _logoutUser(handler);
         }
 
-        final response = await apiClient.post(
-          ApiEndpoints.tokenRefresh,
-          data: {'refresh_token': refreshToken},
-        );
-
-        final newAccessToken = response.data['data']['access_token'];
-        await tokenService.saveAccessToken(newAccessToken);
+        final newAccessToken = await tokenService.getAccessToken();
+        if (newAccessToken == null) {
+          _isRefreshing = false;
+          _requestQueue.clear();
+          return _logoutUser(handler);
+        }
 
         _isRefreshing = false;
 
@@ -1132,37 +1140,30 @@ class CacheException extends AppException {
 // core/storage/token_storage_service.dart
 class TokenStorageService {
   static const _accessTokenKey = 'access_token';
-  static const _refreshTokenKey = 'refresh_token';
   
   final GetStorage _storage = GetStorage();
-
-  Future<void> saveTokens({
-    required String accessToken,
-    required String refreshToken,
-  }) async {
-    await Future.wait([
-      _storage.write(_accessTokenKey, accessToken),
-      _storage.write(_refreshTokenKey, refreshToken),
-    ]);
-  }
 
   Future<void> saveAccessToken(String token) async {
     await _storage.write(_accessTokenKey, token);
   }
 
   Future<String?> getAccessToken() async {
-    return _storage.read<String>(_accessTokenKey);
+    // Prefer Supabase session token (authoritative)
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    return token ?? _storage.read<String>(_accessTokenKey);
   }
 
-  Future<String?> getRefreshToken() async {
-    return _storage.read<String>(_refreshTokenKey);
+  Future<bool> refreshSupabaseSession() async {
+    try {
+      final res = await Supabase.instance.client.auth.refreshSession();
+      return res.session?.accessToken != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> clearTokens() async {
-    await Future.wait([
-      _storage.remove(_accessTokenKey),
-      _storage.remove(_refreshTokenKey),
-    ]);
+    await _storage.remove(_accessTokenKey);
   }
 
   Future<bool> isTokenAvailable() async {

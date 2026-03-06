@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # ── Server ────────────────────────────────────────────
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    # Use 2-4 workers (Render has more capacity than Oracle free tier)
+    # Use 2-4 workers on platforms with more capacity (e.g. Render). For a small VM, start with 1.
     WORKERS: int = 2
 
     # ── Database (PostgreSQL + asyncpg) ───────────────────

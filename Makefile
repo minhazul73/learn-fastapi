@@ -15,7 +15,7 @@ dev: ## Run local dev server with reload
 up-dev: ## Start dev containers
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
-up-prod: ## Start prod containers (Oracle free tier tuned)
+up-prod: ## Start prod containers (self-hosted small VM tuned)
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 down: ## Stop all containers

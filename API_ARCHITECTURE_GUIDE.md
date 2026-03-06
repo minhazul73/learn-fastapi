@@ -7,7 +7,7 @@ This is a **production-ready FastAPI backend** designed specifically for mobile 
 **Key Characteristics:**
 - Framework: FastAPI with async/await (SQLAlchemy 2.0 + asyncpg)
 - Database: PostgreSQL with Alembic migrations
-- Authentication: JWT with access/refresh token pattern
+- Authentication: **Supabase Auth** (client gets a Supabase access token; API verifies via JWKS)
 - API Versioning: `/api/v1/` URL prefix for backward compatibility
 - Response Format: Standardized JSON responses across all endpoints
 - Deployment: Docker containerized, Render.com ready (free tier compatible)
@@ -28,7 +28,7 @@ This is a **production-ready FastAPI backend** designed specifically for mobile 
 └─────────────────────────────────────────────────────┘
                          ↕ HTTPS
 ┌─────────────────────────────────────────────────────┐
-│     FastAPI Application (Python 3.10+)              │
+│     FastAPI Application (Python 3.12+)              │
 ├─────────────────────────────────────────────────────┤
 │  ROUTING LAYER                                      │
 │  ├── /api/v1/health ..................... Health   │
@@ -37,10 +37,10 @@ This is a **production-ready FastAPI backend** designed specifically for mobile 
 │                                                     │
 │  DEPENDENCY INJECTION & SECURITY                   │
 │  ├── get_db() ........................ DB Session  │
-│  ├── get_current_user() ................... JWT    │
+│  ├── get_current_user() ............ Supabase JWT  │
 │                                                     │
 │  BUSINESS LOGIC LAYER (Services)                   │
-│  ├── AuthService ................. User Auth & JWT │
+│  ├── AuthService .......... Supabase user mapping  │
 │  ├── ItemService ................... Item CRUD    │
 │                                                     │
 │  DATA MODELS (SQLAlchemy ORM)                      │
@@ -53,8 +53,7 @@ This is a **production-ready FastAPI backend** designed specifically for mobile 
 │  ├── error_response() ............. Standard errors│
 │                                                     │
 │  SECURITY & EXCEPTIONS                             │
-│  ├── JWT Encoding/Decoding ......... python-jose  │
-│  ├── Password Hashing ............. bcrypt        │
+│  ├── JWKS Verification ............. python-jose  │
 │  ├── Custom Exception Handlers ... Unified errors │
 └─────────────────────────────────────────────────────┘
                          ↕
@@ -116,143 +115,18 @@ GET /api/v1/health
 
 ---
 
-### 2. AUTHENTICATION ENDPOINTS
+### 2. AUTHENTICATION (SUPABASE)
 
-#### 2.1 Register New User
+This backend is **Supabase-authenticated**:
+- Users sign up / sign in using **Supabase Auth** in the mobile app.
+- The mobile app sends the **Supabase access token (JWT)** to this API.
+- This API verifies the JWT signature against Supabase **JWKS** and provisions/links a local `User` row using the token claims (`sub`, `email`).
 
-```
-POST /api/v1/auth/register
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securepassword123"
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "response_code": 201,
-  "message": "User registered successfully",
-  "table_name": "",
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "bearer"
-  }
-}
-```
-
-**Error Responses:**
-- `409 Conflict`: Email already registered
-- `422 Unprocessable Entity`: Invalid email format or missing fields
-
-**Mobile Implementation Notes:**
-- Validate email format client-side before sending
-- Store both tokens securely (encrypted SharedPreferences in Flutter)
-- Use refresh_token for long-term authentication
-- Typical flow: Show confirmation screen → Navigate to login
-
----
-
-#### 2.2 User Login
-
-```
-POST /api/v1/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securepassword123"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "response_code": 200,
-  "message": "Login successful",
-  "table_name": "",
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "bearer"
-  }
-}
-```
-
-**Error Responses:**
-- `401 Unauthorized`: Invalid email or password
-- `422 Unprocessable Entity`: Invalid request format
-
-**Token Structure (JWT HS256):**
-```
-Header: { "alg": "HS256", "typ": "JWT" }
-Payload: {
-  "sub": "123",        // user_id as string
-  "type": "access",    // token type
-  "exp": 1645000000    // expiration (30 minutes)
-}
-Signature: HMAC-SHA256(SECRET_KEY)
-```
-
-**Mobile Implementation Notes:**
-- Implement network request timeout (15-30 seconds)
-- Show loading state during login
-- Cache user ID from token for local profile display
-- Implement biometric login using refresh token (optional)
-
----
-
-#### 2.3 Refresh Access Token
-
-```
-POST /api/v1/auth/refresh
-Content-Type: application/json
-
-{
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "response_code": 200,
-  "message": "Token refreshed successfully",
-  "table_name": "",
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "bearer"
-  }
-}
-```
-
-**Error Responses:**
-- `401 Unauthorized`: Invalid or expired refresh token
-
-**Token Expiration:**
-- Access Token: 30 minutes (configurable)
-- Refresh Token: 7 days (configurable)
-
-**Mobile Implementation Notes:**
-- Call this endpoint when access_token expires (before or on 401)
-- Implement automatic token refresh in HTTP interceptor
-- Store refresh_token in encrypted storage, access_token in memory
-- Implement logout when refresh token expires
-
----
-
-#### 2.4 Get Current User Profile
+#### 2.1 Get Current User Profile
 
 ```
 GET /api/v1/auth/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Authorization: Bearer <SUPABASE_ACCESS_TOKEN>
 ```
 
 **Response (200 OK):**
@@ -277,7 +151,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Mobile Implementation Notes:**
 - Call on app startup to verify existing session
 - Display in user profile/settings screen
-- Use for server-side email confirmation check
+- Use this endpoint to force user provisioning/linking on first login
+
+#### 2.2 Retired Local Auth Endpoints
+
+These endpoints exist only for backward compatibility and return **410 Gone**:
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+
+Example response:
+```json
+{
+  "success": false,
+  "response_code": 410,
+  "message": "Local auth is retired. Use Supabase Auth and send the Supabase JWT to this API.",
+  "table_name": "",
+  "data": null
+}
+```
 
 ---
 
@@ -610,7 +503,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 class User:
     id: int                          # Primary key, auto-increment
     email: str                       # Unique, indexed, email validation
-    hashed_password: str             # bcrypt hashed, never stored plaintext
+    hashed_password: str | null      # Legacy/local auth only (nullable)
+    supabase_user_id: str | null     # Supabase user id (JWT `sub`), nullable
     is_active: bool                  # Account status flag
     is_superuser: bool               # Admin flag
     created_at: datetime             # Auto-set on creation
@@ -620,7 +514,8 @@ class User:
 **Constraints:**
 - Email must be unique across all users
 - Email must be valid email format
-- Password must be SHA256 hashed with bcrypt (cost factor 12)
+- `supabase_user_id` is unique when present
+- Password storage/verification is not used in Supabase-auth mode
 
 ---
 
@@ -715,48 +610,13 @@ All API responses follow this standardized format:
 
 ## Authentication & Security
 
-### JWT Token Flow
+### Supabase Token Flow
 
-1. **Registration/Login** → Server returns `access_token` + `refresh_token`
-2. **Subsequent Requests** → Include `access_token` in Authorization header
-3. **Token Expiry** → Use `refresh_token` to get new `access_token`
-4. **Logout** → Delete tokens from client storage
-
-### Token Details
-
-```
-Authorization: Bearer <access_token>
-```
-
-**Access Token:**
-- Valid for: 30 minutes
-- Used for: API requests
-- Storage: In-memory (app variable)
-- Lost on app restart ✓ (intentional for security)
-
-**Refresh Token:**
-- Valid for: 7 days
-- Used for: Getting new access tokens
-- Storage: Encrypted persistent storage
-- Survives app restart
-
-**Token Payload Example:**
-```python
-{
-  "sub": "123",              # user ID as string
-  "type": "access",          # or "refresh"
-  "iat": 1645000000,         # issued at timestamp
-  "exp": 1645001800          # expiration timestamp
-}
-```
-
-### Password Security
-
-- Algorithm: bcrypt (cost factor 12)
-- Never stored plaintext
-- Verified using constant-time comparison
-- On registration: hashed and stored
-- On login: input hashed and compared to stored hash
+1. **Sign in / sign up** happens in the mobile app via Supabase Auth.
+2. **API calls** include the Supabase access token:
+   `Authorization: Bearer <SUPABASE_ACCESS_TOKEN>`
+3. **Token refresh** is handled by Supabase client SDKs; this API does not expose `/auth/refresh`.
+4. **On first request**, the API links or creates a local user record using the JWT claims.
 
 ### HTTP Security Headers
 
@@ -772,14 +632,15 @@ Authorization: Bearer <access_token>
 
 | Code | Scenario | Example |
 |------|----------|---------|
-| 200 | Successful GET, POST (refresh) | Login successful |
+| 200 | Successful GET | Items fetched |
 | 201 | Successful POST/create | Item created |
 | 204 | Successful DELETE | Item deleted |
 | 400 | Bad request | Invalid JSON |
 | 401 | Unauthorized | Invalid token, not logged in |
 | 403 | Forbidden | Insufficient permissions |
 | 404 | Not found | Item doesn't exist |
-| 409 | Conflict | Email already registered |
+| 409 | Conflict | Unique constraint / conflicting state |
+| 410 | Gone | Legacy local auth endpoints (register/login/refresh) |
 | 422 | Validation error | Invalid email format |
 | 500 | Server error | Database connection failed |
 | 503 | Service unavailable | Database unreachable |
@@ -798,18 +659,11 @@ Authorization: Bearer <access_token>
 
 ### Common Error Scenarios
 
-**Email Already Registered:**
-```
-POST /api/v1/auth/register
-Status: 409 Conflict
-Message: "Email already registered"
-```
-
-**Invalid Credentials:**
+**Legacy Local Auth Called:**
 ```
 POST /api/v1/auth/login
-Status: 401 Unauthorized
-Message: "Invalid email or password"
+Status: 410 Gone
+Message: "Local auth is retired. Use Supabase Auth and send the Supabase JWT to this API."
 ```
 
 **Missing Authentication:**
@@ -867,8 +721,8 @@ PostgreSQL
 ```yaml
 dependencies:
   dio: ^5.0.0              # HTTP client with interceptors
-  secure_storage: ^9.0.0   # Encrypted token storage
-  freezed_annotation: ^2.0.0  # DTO generation
+  supabase_flutter: ^2.0.0 # Supabase Auth client SDK
+  freezed_annotation: ^2.0.0       # DTO generation
 ```
 
 ### Token Management Implementation
@@ -879,7 +733,6 @@ class ApiService extends DioMixin with HttpClientMixin implements Dio {
     interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          /// Add access token to every request
           final token = await tokenService.getAccessToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -887,12 +740,14 @@ class ApiService extends DioMixin with HttpClientMixin implements Dio {
           return handler.next(options);
         },
         onError: (error, handler) async {
-          /// Handle 401: refresh token
+          /// Handle 401: refresh Supabase session (no backend refresh endpoint)
           if (error.response?.statusCode == 401) {
-            final refreshed = await tokenService.refreshToken();
-            if (refreshed) {
-              // Retry original request
-              final newToken = await tokenService.getAccessToken();
+            final refreshed = await tokenService.refreshSupabaseSession();
+            if (!refreshed) return handler.next(error);
+
+            // Retry original request with a fresh access token
+            final newToken = await tokenService.getAccessToken();
+            if (newToken != null) {
               error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
               return handler.resolve(await fetch(error.requestOptions));
             }
@@ -909,31 +764,20 @@ class ApiService extends DioMixin with HttpClientMixin implements Dio {
 
 ```dart
 class AuthService {
-  Future<void> register(String email, String password) async {
-    final response = await apiService.post('/auth/register', data: {
-      'email': email,
-      'password': password,
-    });
-    
-    final tokens = response.data['data'];
-    await tokenService.saveTokens(tokens);
-    await userService.setCurrentUser(userId: extractUserId(tokens));
-  }
+  /// Sign up/sign in via Supabase in the client.
+  /// Then call the backend with the Supabase access token.
+  Future<void> loginWithSupabase(String email, String password) async {
+    await supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
 
-  Future<void> login(String email, String password) async {
-    final response = await apiService.post('/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
-    
-    final tokens = response.data['data'];
-    await tokenService.saveTokens(tokens);
-    await userService.setCurrentUser(userId: extractUserId(tokens));
+    // Optional: hit /auth/me to provision/link the local user row.
+    await apiService.get('/auth/me');
   }
 
   Future<void> logout() async {
-    await tokenService.clearTokens();
-    await userService.clearCurrentUser();
+    await supabase.auth.signOut();
   }
 }
 ```
@@ -1078,7 +922,7 @@ class ApiException implements Exception {
 
 ## Configuration & Environment Variables
 
-### Development Environment (.env.dev)
+### Development Environment (.env)
 
 ```env
 APP_NAME=MyApp API
@@ -1088,21 +932,29 @@ DEBUG=True
 
 HOST=0.0.0.0
 PORT=8000
-WORKERS=1
+WORKERS=2
 
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/myapp_dev
-DB_POOL_SIZE=5
-DB_MAX_OVERFLOW=0
+DB_SSLMODE=verify-full
+DB_POOL_SIZE=10
+DB_MAX_OVERFLOW=3
 
+# Legacy local-JWT settings (not used in Supabase-auth mode; kept for compatibility)
 SECRET_KEY=dev-secret-key-change-in-production
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
+SUPABASE_ISSUER=https://<project-ref>.supabase.co/auth/v1
+SUPABASE_JWKS_URL=https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json
+SUPABASE_AUDIENCE=authenticated
+SUPABASE_ACCEPTED_ALGS=["RS256","ES256"]
+SUPABASE_ANON_KEY=
+
 CORS_ORIGINS=["http://localhost:3000", "http://localhost:8081"]
 ```
 
-### Production Environment (.env.prod)
+### Production Environment (Render/VM env vars)
 
 ```env
 APP_NAME=MyApp API
@@ -1115,13 +967,21 @@ PORT=8000
 WORKERS=4
 
 DATABASE_URL=postgresql+asyncpg://[user]:[password]@[host]:[port]/[db]
+DB_SSLMODE=verify-full
 DB_POOL_SIZE=10
 DB_MAX_OVERFLOW=3
 
+# Legacy local-JWT settings (not used in Supabase-auth mode; kept for compatibility)
 SECRET_KEY=[generate-with-openssl-rand-hex-32]
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
+
+SUPABASE_ISSUER=https://<project-ref>.supabase.co/auth/v1
+SUPABASE_JWKS_URL=https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json
+SUPABASE_AUDIENCE=authenticated
+SUPABASE_ACCEPTED_ALGS=["RS256","ES256"]
+SUPABASE_ANON_KEY=
 
 CORS_ORIGINS=["https://app.example.com"]
 ```
@@ -1145,7 +1005,9 @@ docker build -t myapp-api:latest .
 # Run container
 docker run -p 8000:8000 \
   -e DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/myapp \
-  -e SECRET_KEY=your-secret-key \
+  -e SUPABASE_ISSUER=https://<project-ref>.supabase.co/auth/v1 \
+  -e SUPABASE_JWKS_URL=https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json \
+  -e SUPABASE_AUDIENCE=authenticated \
   myapp-api:latest
 
 # With docker-compose
@@ -1301,40 +1163,20 @@ pytest --cov=app tests/
 
 ## Quick Reference: cURL Examples
 
-### Register User
-
-```bash
-curl -X POST http://localhost:8000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-```
-
-### Login
-
-```bash
-curl -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-```
+### Get Current User (Supabase JWT)
 
 ### Get Current User
 
 ```bash
 curl -X GET http://localhost:8000/api/v1/auth/me \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
+  -H "Authorization: Bearer YOUR_SUPABASE_ACCESS_TOKEN_HERE"
 ```
 
 ### Create Item
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/items \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" \
+  -H "Authorization: Bearer YOUR_SUPABASE_ACCESS_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Laptop",

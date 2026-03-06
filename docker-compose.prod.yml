@@ -1,9 +1,9 @@
-# docker-compose.prod.yml  – Production overrides (Oracle free tier)
+# docker-compose.prod.yml  – Production overrides (self-hosted small VM)
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:
   db:
-    # Constrain Postgres for Oracle free tier (1 GB total RAM)
+    # Constrain Postgres for small VMs (~1 GB RAM)
     deploy:
       resources:
         limits:

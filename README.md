@@ -1,6 +1,6 @@
 # MyApp API
 
-Production-ready FastAPI backend for a mobile app, optimised for **Oracle Cloud free tier** (1 OCPU / 1 GB RAM).
+Production-ready FastAPI backend for a mobile app with **PostgreSQL** and **Supabase Auth** (clients authenticate with Supabase; this API verifies the Supabase JWT via JWKS).
 
 ## Architecture
 
@@ -15,7 +15,7 @@ app/
 │       ├── router.py       # v1 aggregate router
 │       └── endpoints/
 │           ├── health.py   # Health check (Docker + LB)
-│           ├── auth.py     # Register / Login / Refresh / Me
+│           ├── auth.py     # Supabase-authenticated user endpoints (/me)
 │           └── items.py    # CRUD example
 ├── models/                 # SQLAlchemy ORM models
 │   ├── base.py             # DeclarativeBase + TimestampMixin
@@ -29,9 +29,10 @@ app/
 │   ├── item.py
 │   └── auth.py
 ├── core/
-│   ├── security.py         # JWT + bcrypt utilities
+│   ├── supabase_security.py # Supabase JWT verification (JWKS)
 │   └── exceptions.py       # Custom exceptions + global handlers
 └── utils/
+    ├── db.py               # Supabase SSL / PgBouncer connect args
     └── n8n.py              # n8n webhook helper (future use)
 
 alembic/                    # Database migrations (async-aware)
@@ -46,9 +47,9 @@ Makefile                    # Common commands
 | Area | Choice | Why |
 |------|--------|-----|
 | Async | SQLAlchemy 2.0 + asyncpg | Non-blocking I/O; fewer workers = less RAM |
-| Workers | 1 gunicorn + uvicorn worker | Oracle free tier has 1 OCPU / 1 GB |
-| DB Pool | 5 connections, 0 overflow | Bounded memory |
-| Auth | JWT (access + refresh tokens) | Stateless; ideal for mobile apps |
+| Workers | 2 gunicorn + uvicorn workers (default) | Good default for Render; configurable via `WORKERS` |
+| DB Pool | Pooling with bounded overflow | Tuned via `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` |
+| Auth | Supabase Auth (JWT via JWKS) | Mobile auth handled by Supabase; backend verifies tokens |
 | API versioning | `/api/v1/` prefix | Backward compatibility for shipped apps |
 | Migrations | Alembic (async) | Schema versioning without downtime |
 | Config | pydantic-settings + `.env` | Same code, different env files per stage |
@@ -73,6 +74,9 @@ pip install -r requirements.txt
 
 # Copy & edit env
 cp .env.example .env
+
+# If you want authenticated endpoints to work, configure Supabase env vars
+# in .env (SUPABASE_JWKS_URL, SUPABASE_ISSUER, etc.).
 
 # Make sure Postgres is running, then:
 alembic upgrade head        # apply migrations
@@ -101,13 +105,13 @@ Quick summary:
 - Set environment variables in Render dashboard
 - Done! Auto-deploys on every `git push`
 
-**Why Render over Oracle?**
+**Why Render?**
 - No credit card required
-- Simpler setup (no container management)
+- Simpler setup (no server/container management)
 - Managed database with automatic backups
 - Auto-scaling & HTTPS included
 
-### 4. Production: Oracle Free Tier
+### 4. Production: Self-Hosted VM (Docker + Nginx)
 
 ```bash
 # On the server
@@ -123,7 +127,7 @@ This repo includes an Nginx reverse proxy and a Certbot renewer in
 **Prereqs**
 
 - Point your domain A record to the VM public IP
-- Open inbound ports 80 and 443 in Oracle security list
+- Open inbound ports 80 and 443 in your server firewall / cloud security group
 
 **One-time cert issuance**
 
@@ -182,15 +186,15 @@ alembic downgrade -1
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | `/api/v1/health` | No | Health check |
-| POST | `/api/v1/auth/register` | No | Create account |
-| POST | `/api/v1/auth/login` | No | Get tokens |
-| POST | `/api/v1/auth/refresh` | No | Refresh access token |
-| GET | `/api/v1/auth/me` | Yes | Current user |
+| GET | `/api/v1/auth/me` | Yes (Supabase JWT) | Current user (provisioned from Supabase identity) |
 | GET | `/api/v1/items` | No | List items |
 | GET | `/api/v1/items/{id}` | No | Get item |
 | POST | `/api/v1/items` | Yes | Create item |
 | PUT | `/api/v1/items/{id}` | Yes | Update item |
 | DELETE | `/api/v1/items/{id}` | Yes | Delete item |
+
+Notes:
+- `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, and `POST /api/v1/auth/refresh` are intentionally retired and return **410 Gone**.
 
 ## n8n Integration (Future)
 
@@ -202,10 +206,10 @@ from app.utils.n8n import trigger_webhook
 await trigger_webhook("on-new-order", {"order_id": 123, "total": 49.99})
 ```
 
-## Oracle Free Tier Deployment Notes
+## Self-Hosted (Small VM) Notes
 
-- **1 OCPU / 1 GB RAM** – keep workers at 1, pool at 3-5
-- Use `docker-compose.prod.yml` which sets memory limits (256 MB each for app + DB)
-- Postgres tuned with `shared_buffers=64MB`, `max_connections=30`
-- Enable swap on the VM: `sudo fallocate -l 1G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
+- If your VM is small (e.g. ~1 GB RAM), keep workers low (often 1) and DB pool small
+- Use `docker-compose.prod.yml` which sets conservative memory limits (256 MB each for app + DB)
+- Postgres is tuned for low memory (e.g. `shared_buffers=64MB`, `max_connections=30`)
+- Consider enabling swap: `sudo fallocate -l 1G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
 - Use Nginx reverse proxy with free Let's Encrypt TLS (see HTTPS section above)
