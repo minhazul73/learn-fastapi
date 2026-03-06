@@ -55,6 +55,8 @@ Render dashboard → Your Web Service → **Environment**:
 | Key | Value | Notes |
 |-----|-------|-------|
 | `DATABASE_URL` | Paste from Step 1 | Update `postgresql://` → `postgresql+asyncpg://` |
+| `DB_SSLMODE` | `require` | Recommended for managed Postgres; use `verify-full` if you want full cert+hostname verification |
+| `DB_CONNECT_TIMEOUT_SECONDS` | `10` | Optional: fail fast instead of hanging on unreachable DB |
 | `ENVIRONMENT` | `prod` | |
 | `DEBUG` | `false` | |
 | `CORS_ORIGINS` | `["https://yourdomain.com"]` | Update to your frontend domain |
